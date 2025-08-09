@@ -20,7 +20,7 @@ jobs:
 
       # Upload artifact (optional, keeps in Actions for download)
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: github/upload-artifact@v1
         with:
           name: my-app
           path: app/build/outputs/apk/release/app-release.apk
