@@ -1,0 +1,43 @@
+name: Build Android App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y zip unzip openjdk-17-jdk
+
+      - name: Install buildozer & dependencies
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython virtualenv
+
+      - name: Restore keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > mykey.keystore
+
+      - name: Build AAB
+        run: |
+          buildozer android release aab \
+            --keystore mykey.keystore \
+            --alias ${{ secrets.KEY_ALIAS }} \
+            --keystorepw ${{ secrets.KEYSTORE_PASSWORD }} \
+            --aliaspw ${{ secrets.KEY_PASSWORD }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: trading-simulator-aab
+          path: bin/*.aab
