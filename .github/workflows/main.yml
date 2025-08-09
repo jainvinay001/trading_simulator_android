@@ -1,0 +1,37 @@
+name: Build and Release Android App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Your existing build steps here
+      # Example:
+      - name: Build APK
+        run: ./gradlew assembleRelease
+
+      # Upload artifact (optional, keeps in Actions for download)
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: my-app
+          path: app/build/outputs/apk/release/app-release.apk
+
+      # Publish to GitHub Releases
+      - name: Create Release and Upload APK
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: "Release v1.${{ github.run_number }}"
+          body: "Automated release from GitHub Actions"
+          files: app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
