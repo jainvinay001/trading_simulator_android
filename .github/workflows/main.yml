@@ -1,37 +1,45 @@
-name: Build and Release Android App
+name: Build Android App
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Your existing build steps here
-      # Example:
-      - name: Build APK
-        run: ./gradlew assembleRelease
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-      # Upload artifact (optional, keeps in Actions for download)
-      - name: Upload Build Artifact
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y openjdk-17-jdk zip unzip
+
+      - name: Install Buildozer and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer cython virtualenv
+
+      - name: Restore keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > mykey.keystore
+
+      - name: Build Android AAB (release)
+        run: |
+          buildozer android release aab \
+            --keystore mykey.keystore \
+            --alias ${{ secrets.ANDROID_KEYSTORE_ALIAS }} \
+            --keystorepw ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            --aliaspw ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Upload signed AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: my-app
-          path: app/build/outputs/apk/release/app-release.apk
-
-      # Publish to GitHub Releases
-      - name: Create Release and Upload APK
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v1.${{ github.run_number }}
-          name: "Release v1.${{ github.run_number }}"
-          body: "Automated release from GitHub Actions"
-          files: app/build/outputs/apk/release/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          name: trading-simulator-release-aab
+          path: bin/*.aab
