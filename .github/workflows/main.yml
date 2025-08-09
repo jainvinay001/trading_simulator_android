@@ -21,16 +21,20 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y unzip wget openjdk-17-jdk zip
-
+          
       - name: Install Android SDK command-line tools and build tools
         run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip wget openjdk-17-jdk
+      
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip
           rm cmdline-tools.zip
+          mv cmdline-tools latest
       
-          export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/tools/bin
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
       
           yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
           sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "build-tools;33.0.0" "platforms;android-33" "cmdline-tools;latest"
